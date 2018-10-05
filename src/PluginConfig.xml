@@ -10,22 +10,6 @@
     <Label>Time between device updates (60-3600)</Label>
   </Field>
 
-  <Field type="textfield" id="connectionTimeout" defaultValue="5">
-    <Label>Connection timeout (seconds):</Label>
-  </Field>
-  <Field id="connectionTimeoutHelp" type="label" fontSize="mini" alignWithControl="true">
-    <Label>Timeout for network connection attempts (1-300)</Label>
-  </Field>
-
-  <Field type="textfield" id="arpCacheTimeout" defaultValue="30">
-    <Label>ARP cache timeout (minutes):</Label>
-  </Field>
-  <Field id="arpCacheTimeoutHelp" type="label" fontSize="mini" alignWithControl="true">
-    <Label>Set timeout for expired ARP cache entires (1-1440)</Label>
-  </Field>
-
-  <Field id="advConfigSep" type="separator" />
-
   <Field id="logLevel" type="menu" defaultValue="20">
     <Label>Event Logging Level:</Label>
     <List>
@@ -35,6 +19,39 @@
       <Option value="40">Error Messages</Option>
       <Option value="50">Critical Errors Only</Option>
     </List>
+  </Field>
+
+  <Field id="advConfigSep" type="separator" />
+
+  <Field id="showAdvConfig" type="checkbox" defaultValue="false">
+    <Label>Advanced Configuration</Label>
+  </Field>
+
+  <Field type="textfield" id="connectionTimeout" defaultValue="5"
+    visibleBindingId="showAdvConfig" visibleBindingValue="true">
+    <Label>Connection timeout (seconds):</Label>
+  </Field>
+  <Field id="connectionTimeoutHelp" type="label" fontSize="mini" alignWithControl="true"
+    visibleBindingId="showAdvConfig" visibleBindingValue="true">
+    <Label>Timeout for network connection attempts (1-300)</Label>
+  </Field>
+
+  <Field type="textfield" id="arpCacheTimeout" defaultValue="5"
+    visibleBindingId="showAdvConfig" visibleBindingValue="true">
+    <Label>ARP cache timeout (minutes):</Label>
+  </Field>
+  <Field id="arpCacheTimeoutHelp" type="label" fontSize="mini" alignWithControl="true"
+    visibleBindingId="showAdvConfig" visibleBindingValue="true">
+    <Label>Set timeout for expired ARP cache entires (1-1440)</Label>
+  </Field>
+
+  <Field type="textfield" id="arpCacheCommand" defaultValue="/usr/sbin/arp -a"
+    visibleBindingId="showAdvConfig" visibleBindingValue="true">
+    <Label>ARP cache command:</Label>
+  </Field>
+  <Field id="arpCacheCommandHelp" type="label" fontSize="mini" alignWithControl="true"
+    visibleBindingId="showAdvConfig" visibleBindingValue="true">
+    <Label>The local command used to build the ARP table</Label>
   </Field>
 
 </PluginConfig>
