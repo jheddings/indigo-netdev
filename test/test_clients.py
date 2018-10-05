@@ -9,7 +9,7 @@ import clients
 logging.basicConfig(level=logging.ERROR)
 
 ################################################################################
-class CommonInternnetServices(unittest.TestCase):
+class CommonInternetServices(unittest.TestCase):
 
     #---------------------------------------------------------------------------
     def test_GoogleDNS(self):
