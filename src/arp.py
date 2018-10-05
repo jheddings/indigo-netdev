@@ -4,8 +4,7 @@ import time
 import logging
 import subprocess
 import threading
-
-# TODO add some unit tests for parsing arp command output
+import shlex
 
 ################################################################################
 class ArpCache():
@@ -13,16 +12,22 @@ class ArpCache():
     cmdLock = None
     cacheLock = None
 
-    cache = dict()
+    cache = None
     timeout = 0
+    arp = None
 
     #---------------------------------------------------------------------------
-    def __init__(self, timeout=5):
+    def __init__(self, timeout=5, arp='/usr/sbin/arp -a'):
         self.logger = logging.getLogger('Plugin.arp.ArpCache')
         self.timeout = timeout
 
         self.cmdLock = threading.Lock()
         self.cacheLock = threading.RLock()
+
+        self.cache = dict()
+
+        self.arp = arp
+        self.logger.debug('using command: %s', self.arp)
 
     #---------------------------------------------------------------------------
     def _normalizeAddress(self, address):
@@ -44,13 +49,15 @@ class ArpCache():
 
     #---------------------------------------------------------------------------
     def _getRawArpTable(self):
+        if self.arp is None: return None
+
         # the command takes some time to run so we will bail if
         # another thread is already executing the arp command
         if not self.cmdLock.acquire(False):
-            self.logger.warn('/usr/sbin/arp: already in use')
+            self.logger.warn('arp: already in use')
             return None
 
-        cmd = ['/usr/sbin/arp', '-a']
+        cmd = shlex.split(self.arp)
         self.logger.debug('exec: %s', cmd)
 
         try:
@@ -66,12 +73,14 @@ class ArpCache():
     #---------------------------------------------------------------------------
     def updateCurrentDevices(self):
         rawOutput = self._getRawArpTable()
+        if rawOutput is None: return
 
         self.cacheLock.acquire()
 
         # translate command output to cache entries
         for line in rawOutput.splitlines():
             parts = line.split()
+            if len(parts) < 4: continue
 
             addr = self._normalizeAddress(parts[3])
             if addr is None: continue
@@ -111,4 +120,8 @@ class ArpCache():
         self.logger.debug('device %s last activity was %d min ago', address, diff)
 
         return (diff < self.timeout)
+
+    #---------------------------------------------------------------------------
+    def getActiveDeviceCount(self):
+        return len(self.cache)
 
