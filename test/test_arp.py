@@ -2,6 +2,7 @@
 
 import logging
 import unittest
+import time
 
 import arp
 
@@ -24,8 +25,14 @@ class ArpCacheTestBase(unittest.TestCase):
         cache.rebuildArpCache()
         return cache
 
+    #---------------------------------------------------------------------------
+    def _buildTableFromLines(self, lines):
+        cache = arp.ArpCache(arp=None)
+        cache._updateCache(lines)
+        return cache
+
 ################################################################################
-class BasicArpTableCommandUnitTest(ArpCacheTestBase):
+class BasicArpCommandUnitTest(ArpCacheTestBase):
 
     #---------------------------------------------------------------------------
     def test_NullTableUnitTest(self):
@@ -37,11 +44,6 @@ class BasicArpTableCommandUnitTest(ArpCacheTestBase):
         cache = arp.ArpCache()
         cache.rebuildArpCache()
         self.assertNotEqual(cache.getActiveDeviceCount(), 0)
-
-################################################################################
-class BadArpTableCommandUnitTest(ArpCacheTestBase):
-
-    # these tests mostly watch for errors when running bad commands
 
     #---------------------------------------------------------------------------
     def test_BadReturnValue(self):
@@ -56,4 +58,100 @@ class BadArpTableCommandUnitTest(ArpCacheTestBase):
     #---------------------------------------------------------------------------
     def test_GarbageOutput(self):
         self._buildTableFromCommand('dd if=/dev/urandom bs=1 count=1024')
+
+################################################################################
+class ArpTableParsingUnitTest(ArpCacheTestBase):
+
+    #---------------------------------------------------------------------------
+    def test_SimpleArpTableLowerCase(self):
+        mac = '20:c4:df:a0:54:28'
+
+        cache = self._buildTableFromLines([
+            'localhost (127.0.0.1) at %s on en0 ifscope [ethernet]' % mac
+        ])
+
+        self.assertTrue(cache.isActive(mac))
+        self.assertTrue(cache.isActive(mac.upper()))
+
+    #---------------------------------------------------------------------------
+    def test_SimpleArpTableUpperCase(self):
+        mac = '20:C4:D7:A0:54:28'
+
+        cache = self._buildTableFromLines([
+            'localhost (127.0.0.1) at %s on en0 ifscope [ethernet]' % mac
+        ])
+
+        self.assertTrue(cache.isActive(mac))
+        self.assertTrue(cache.isActive(mac.lower()))
+
+    #---------------------------------------------------------------------------
+    # seen using DD-WRT routers - slightly different than macOS
+    def test_RouterLineFormat(self):
+        mac = '30:2A:43:B2:01:2F'
+
+        cache = self._buildTableFromLines([
+            'DD-WRT v3.0-r29264 std (c) 2016 NewMedia-NET GmbH',
+            '? (10.0.0.1) at %s [ether]  on br0' % mac
+        ])
+
+        self.assertTrue(cache.isActive(mac))
+
+    #---------------------------------------------------------------------------
+    def test_MultilineBasicTable(self):
+        cache = self._buildTableFromLines([
+            '? (0.0.0.0) at 11:22:33:44:55:66 on en0 ifscope [ethernet]',
+            '? (0.0.0.0) at AA:BB:CC:DD:EE:FF on en0 ifscope [ethernet]',
+            '? (0.0.0.0) at 12:34:56:78:9A:BC on en0 ifscope [ethernet]'
+        ])
+
+        self.assertTrue(cache.isActive('11:22:33:44:55:66'))
+        self.assertTrue(cache.isActive('AA:BB:CC:DD:EE:FF'))
+        self.assertTrue(cache.isActive('12:34:56:78:9A:BC'))
+
+
+################################################################################
+class ArpTableActiveExpiredUnitTest(ArpCacheTestBase):
+
+    # this test relies on internals of the ArpCache, such as directly modifying
+    # the contents of the cache and the _isExpired method
+
+    #---------------------------------------------------------------------------
+    def test_BasicExpirationTests(self):
+        cache = arp.ArpCache(timeout=1, arp=None)
+
+        now = time.time()
+
+        self.assertFalse(cache._isExpired(now))
+        self.assertFalse(cache._isExpired(now - 30))
+        self.assertFalse(cache._isExpired(now - 59))
+
+        self.assertTrue(cache._isExpired(now - 60))
+        self.assertTrue(cache._isExpired(now - 500))
+
+    #---------------------------------------------------------------------------
+    def test_SimpleCurrentItemCheck(self):
+        cache = arp.ArpCache(timeout=1, arp=None)
+
+        now = time.time()
+
+        cache.cache['current'] = now
+        cache.cache['recent'] = now - 30
+
+        self.assertTrue(cache.isActive('current'))
+        self.assertTrue(cache.isActive('recent'))
+
+    #---------------------------------------------------------------------------
+    def test_SimpleExpiredItemCheck(self):
+        cache = arp.ArpCache(timeout=1, arp=None)
+
+        now = time.time()
+
+        # since we created the table with a 1-minute timeout...
+        cache.cache['expired'] = now - 60
+        cache.cache['inactive'] = now - 61
+        cache.cache['ancient'] = now - 300
+
+        self.assertFalse(cache.isActive('expired'))
+        self.assertFalse(cache.isActive('inactive'))
+        self.assertFalse(cache.isActive('ancient'))
 

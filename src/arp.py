@@ -31,7 +31,7 @@ class ArpCache():
 
     #---------------------------------------------------------------------------
     def _normalizeAddress(self, address):
-        addr = address.upper()
+        addr = address.lower()
 
         # TODO make sure all octets are padded
         # TODO return None for invalid address
@@ -39,16 +39,7 @@ class ArpCache():
         return addr
 
     #---------------------------------------------------------------------------
-    def rebuildArpCache(self):
-        self.cacheLock.acquire()
-
-        self.updateCurrentDevices()
-        self.purgeInactiveDevices()
-
-        self.cacheLock.release()
-
-    #---------------------------------------------------------------------------
-    def _getRawArpTable(self):
+    def _getRawArpOutput(self):
         if self.arp is None: return None
 
         # the command takes some time to run so we will bail if
@@ -71,57 +62,88 @@ class ArpCache():
         return pout
 
     #---------------------------------------------------------------------------
-    def updateCurrentDevices(self):
-        rawOutput = self._getRawArpTable()
-        if rawOutput is None: return
-
+    def _updateCache(self, lines):
         self.cacheLock.acquire()
 
-        # translate command output to cache entries
-        for line in rawOutput.splitlines():
+        for line in lines:
             parts = line.split()
             if len(parts) < 4: continue
 
+            # XXX safe to assume the part number?
             addr = self._normalizeAddress(parts[3])
             if addr is None: continue
 
+            # update time for found devices
             self.cache[addr] = time.time()
             self.logger.debug('device found: %s', addr)
 
         self.cacheLock.release()
 
     #---------------------------------------------------------------------------
+    def _isExpired(self, timestamp):
+        if timestamp is None: return None
+
+        now = time.time()
+        diff = (now - timestamp) / 60
+
+        return (diff >= self.timeout)
+
+    #---------------------------------------------------------------------------
+    def rebuildArpCache(self):
+        self.cacheLock.acquire()
+
+        self.updateCurrentDevices()
+        self.purgeInactiveDevices()
+
+        self.cacheLock.release()
+
+    #---------------------------------------------------------------------------
+    def updateCurrentDevices(self):
+        rawOutput = self._getRawArpOutput()
+        if rawOutput is None: return
+
+        self._updateCache(rawOutput.splitlines())
+
+    #---------------------------------------------------------------------------
     def purgeInactiveDevices(self):
-        toBePurged = list()
+        # track the items that have expired...  we can't modify
+        # the cache while we are iterating over its contents
+        expired = list()
 
         self.cacheLock.acquire()
 
         # first, find all the expired keys
-        for addr in self.cache.keys():
-            if not self.isActive(addr):
+        for addr, tstamp in self.cache.items():
+            if self._isExpired(tstamp):
                 self.logger.debug('device expired: %s; marked for removal', addr)
-                toBePurged.append(addr)
+                expired.append(addr)
 
         # now, delete the expired addresses
-        for addr in toBePurged: del self.cache[addr]
+        for addr in expired: del self.cache[addr]
 
         self.cacheLock.release()
 
     #---------------------------------------------------------------------------
     def isActive(self, address):
         addr = self._normalizeAddress(address)
+        tstamp = self.cache.get(addr)
 
-        last = self.cache.get(addr)
-        if last is None: return False
+        expired = self._isExpired(tstamp)
+        if expired is None: return False
 
-        now = time.time()
-        diff = (now - last) / 60
-
-        self.logger.debug('device %s last activity was %d min ago', address, diff)
-
-        return (diff < self.timeout)
+        return (not expired)
 
     #---------------------------------------------------------------------------
     def getActiveDeviceCount(self):
-        return len(self.cache)
+        count = 0
+
+        self.cacheLock.acquire()
+
+        for addr, tstamp in self.cache.items():
+            if not self._isExpired(tstamp):
+                count += 1
+
+        self.cacheLock.release()
+
+        return count
 
