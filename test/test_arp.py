@@ -108,6 +108,18 @@ class ArpTableParsingUnitTest(ArpCacheTestBase):
         self.assertTrue(cache.isActive('AA:BB:CC:DD:EE:FF'))
         self.assertTrue(cache.isActive('12:34:56:78:9A:BC'))
 
+    #---------------------------------------------------------------------------
+    def test_LeadingZerosInAddressOctects(self):
+        cache = self._buildTableFromLines([
+            'node (127.0.0.1) at 0:2a:43:4:b:51 on en0 ifscope [ethernet]',
+            'node (127.0.0.1) at 20:a2:04:b3:0c:ed on en0 ifscope [ethernet]'
+        ])
+
+        self.assertTrue(cache.isActive('0:2a:43:4:b:51'))
+        self.assertTrue(cache.isActive('00:2a:43:04:0b:51'))
+
+        self.assertTrue(cache.isActive('20:a2:04:b3:0c:ed'))
+        self.assertTrue(cache.isActive('20:a2:4:b3:c:ed'))
 
 ################################################################################
 class ArpTableActiveExpiredUnitTest(ArpCacheTestBase):

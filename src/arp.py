@@ -33,8 +33,10 @@ class ArpCache():
     def _normalizeAddress(self, address):
         addr = address.lower()
 
-        # TODO make sure all octets are padded
         # TODO return None for invalid address
+
+        # make sure all octets are padded - macOS arp does not pad properly
+        addr = ':'.join(map(lambda byte: byte.zfill(2), addr.split(':')))
 
         return addr
 
