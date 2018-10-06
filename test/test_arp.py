@@ -122,6 +122,23 @@ class ArpTableParsingUnitTest(ArpCacheTestBase):
         self.assertTrue(cache.isActive('20:a2:4:b3:c:ed'))
 
 ################################################################################
+class ArpTablePurgeUnitTest(ArpCacheTestBase):
+
+    #---------------------------------------------------------------------------
+    def test_ConfirmPurgedItem(self):
+        cache = arp.ArpCache(timeout=1, arp=None)
+
+        now = time.time()
+
+        cache.cache['current'] = now
+        cache.cache['expired'] = now - 61
+
+        cache.purgeExpiredDevices()
+
+        self.assertIn('current', cache.cache);
+        self.assertNotIn('expired', cache.cache);
+
+################################################################################
 class ArpTableActiveExpiredUnitTest(ArpCacheTestBase):
 
     # this test relies on internals of the ArpCache, such as directly modifying

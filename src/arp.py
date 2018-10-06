@@ -95,7 +95,7 @@ class ArpCache():
         self.cacheLock.acquire()
 
         self.updateCurrentDevices()
-        self.purgeInactiveDevices()
+        self.purgeExpiredDevices()
 
         self.cacheLock.release()
 
@@ -107,7 +107,7 @@ class ArpCache():
         self._updateCache(rawOutput.splitlines())
 
     #---------------------------------------------------------------------------
-    def purgeInactiveDevices(self):
+    def purgeExpiredDevices(self):
         # track the items that have expired...  we can't modify
         # the cache while we are iterating over its contents
         expired = list()
