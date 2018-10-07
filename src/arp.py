@@ -110,7 +110,7 @@ class ArpCache():
     def purgeExpiredDevices(self):
         # track the items that have expired...  we can't modify
         # the cache while we are iterating over its contents
-        expired = list()
+        expiredDevices = list()
 
         self.cacheLock.acquire()
 
@@ -118,10 +118,10 @@ class ArpCache():
         for addr, tstamp in self.cache.items():
             if self._isExpired(tstamp):
                 self.logger.debug('device expired: %s; marked for removal', addr)
-                expired.append(addr)
+                expiredDevices.append(addr)
 
         # now, delete the expired addresses
-        for addr in expired: del self.cache[addr]
+        for addr in expiredDevices: del self.cache[addr]
 
         self.cacheLock.release()
 
