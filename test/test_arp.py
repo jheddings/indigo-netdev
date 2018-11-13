@@ -28,7 +28,7 @@ class ArpCacheTestBase(unittest.TestCase):
     #---------------------------------------------------------------------------
     def _buildTableFromLines(self, lines):
         cache = arp.ArpCache(arp=None)
-        cache._updateCache(lines)
+        cache._updateCacheLines(lines)
         return cache
 
 ################################################################################

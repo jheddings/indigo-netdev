@@ -5,6 +5,7 @@ import logging
 import subprocess
 import threading
 import shlex
+import sys
 
 ################################################################################
 class ArpCache():
@@ -64,20 +65,34 @@ class ArpCache():
         return pout
 
     #---------------------------------------------------------------------------
-    def _updateCache(self, lines):
+    def _updateCacheData(self, arp_output):
+        self._updateCacheLines(arp_output.splitlines())
+
+    #---------------------------------------------------------------------------
+    def _updateCacheLines(self, lines):
         self.cacheLock.acquire()
 
         for line in lines:
-            parts = line.split()
-            if len(parts) < 4: continue
+            self._updateCacheLine(line)
 
-            # XXX safe to assume the part number?
-            addr = self._normalizeAddress(parts[3])
-            if addr is None: continue
+        self.cacheLock.release()
 
-            # update time for found devices
-            self.cache[addr] = time.time()
-            self.logger.debug('device found: %s', addr)
+    #---------------------------------------------------------------------------
+    def _updateCacheLine(self, line):
+        self.cacheLock.acquire()
+
+        tstamp = time.time()
+
+        parts = line.split()
+        if len(parts) < 4: return
+
+        # XXX safe to assume the part number?
+        addr = self._normalizeAddress(parts[3])
+        if addr is None: return
+
+        # update time for found devices
+        self.cache[addr] = tstamp
+        self.logger.debug('device found: %s @ %d', addr, tstamp)
 
         self.cacheLock.release()
 
@@ -104,7 +119,7 @@ class ArpCache():
         rawOutput = self._getRawArpOutput()
         if rawOutput is None: return
 
-        self._updateCache(rawOutput.splitlines())
+        self._updateCacheData(rawOutput)
 
     #---------------------------------------------------------------------------
     def purgeExpiredDevices(self):
@@ -149,3 +164,16 @@ class ArpCache():
 
         return count
 
+################################################################################
+def main():
+    table = sys.stdin.read()
+
+    # TODO if there is a command line param, use that to build the arp table
+
+    arp = ArpCache(arp=None)
+    arp._updateCacheData(table)
+
+#-------------------------------------------------------------------------------
+if (__name__== "__main__"):
+    logging.basicConfig(level=logging.DEBUG)
+    main()
