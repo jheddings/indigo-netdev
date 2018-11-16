@@ -211,7 +211,7 @@ class ArpTableUpdateTest(ArpCacheTestBase):
         self.assertFalse(cache.isActive('ab:12:cd:34:ef:56'));
 
     #---------------------------------------------------------------------------
-    def test_UpdateCacheLine(self):
+    def test_LineUpdateTimeShift(self):
         cache = arp.ArpCache(timeout=1, arp=None)
 
         cache._updateCacheLine(self.arp_data[0])
@@ -222,7 +222,6 @@ class ArpTableUpdateTest(ArpCacheTestBase):
         cache._updateCacheLine(self.arp_data[0])
         second_time = cache['01:23:45:67:89:ab']
 
-        self.assertNotEqual(first_time, second_time)
         self.assertGreater(second_time, first_time)
 
 ################################################################################

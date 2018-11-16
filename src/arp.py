@@ -70,10 +70,13 @@ class ArpCache():
 
     #---------------------------------------------------------------------------
     def _updateCacheData(self, arp_output):
+        self.logger.debug('reading %d bytes into ARP table', len(arp_output))
         self._updateCacheLines(arp_output.splitlines())
 
     #---------------------------------------------------------------------------
     def _updateCacheLines(self, lines):
+        self.logger.debug('loading %d lines into ARP table', len(lines))
+
         self.cacheLock.acquire()
 
         for line in lines:
@@ -83,18 +86,19 @@ class ArpCache():
 
     #---------------------------------------------------------------------------
     def _updateCacheLine(self, line):
-        self.cacheLock.acquire()
+        self.logger.debug('parsing table entry: %s', line)
 
         parts = line.split()
         if len(parts) < 4: return
 
-        # XXX safe to assume the part number?
+        # XXX safe to assume the part index?
         addr = self._normalizeAddress(parts[3])
         if addr is None: return
 
-        tstamp = time.time()
+        self.cacheLock.acquire()
 
         # update time for found devices
+        tstamp = time.time()
         self.cache[addr] = tstamp
         self.logger.debug('device found: %s @ %s', addr, tstamp)
 
@@ -103,6 +107,8 @@ class ArpCache():
     #---------------------------------------------------------------------------
     def _isExpired(self, timestamp):
         if timestamp is None: return None
+
+        # configured timeout is in minutes, timestamps are in seconds...
 
         now = time.time()
         diff = (now - timestamp) / 60
