@@ -184,29 +184,42 @@ class ArpTableUpdateTest(ArpCacheTestBase):
     # this test relies on internals of the ArpCache, such as directly modifying
     # the contents of the cache and the _update methods
 
+    arp_data = [
+        'localhost (127.0.0.1) at 01:23:45:67:89:ab on en0 ifscope [ethernet]',
+        'pc (192.168.0.1) at ef:cd:ab:12:34:56 on en0 ifscope [ethernet]',
+        'laptop (192.168.0.2) at ab:12:cd:34:ef:56 on en0 ifscope [ethernet]'
+    ]
+
     #---------------------------------------------------------------------------
     def test_BasicUpdateTest(self):
         cache = arp.ArpCache(timeout=1, arp=None)
 
-        cache_line = 'localhost (127.0.0.1) at 01:23:45:67:89:ab on en0 ifscope [ethernet]'
-
-        cache._updateCacheLine(cache_line)
+        cache._updateCacheLines(self.arp_data)
 
         self.assertTrue(cache.isActive('01:23:45:67:89:ab'));
-        self.assertFalse(cache.isActive('01:23:45:67:89:cd'));
+        self.assertTrue(cache.isActive('ef:cd:ab:12:34:56'));
+        self.assertTrue(cache.isActive('ab:12:cd:34:ef:56'));
+
+    #---------------------------------------------------------------------------
+    def test_BasicLineUpdateTest(self):
+        cache = arp.ArpCache(timeout=1, arp=None)
+
+        cache._updateCacheLine(self.arp_data[0])
+
+        self.assertTrue(cache.isActive('01:23:45:67:89:ab'));
+        self.assertFalse(cache.isActive('ef:cd:ab:12:34:56'));
+        self.assertFalse(cache.isActive('ab:12:cd:34:ef:56'));
 
     #---------------------------------------------------------------------------
     def test_UpdateCacheLine(self):
         cache = arp.ArpCache(timeout=1, arp=None)
 
-        cache_line = 'localhost (127.0.0.1) at 01:23:45:67:89:ab on en0 ifscope [ethernet]'
-
-        cache._updateCacheLine(cache_line)
+        cache._updateCacheLine(self.arp_data[0])
         first_time = cache['01:23:45:67:89:ab']
 
         time.sleep(1)
 
-        cache._updateCacheLine(cache_line)
+        cache._updateCacheLine(self.arp_data[0])
         second_time = cache['01:23:45:67:89:ab']
 
         self.assertNotEqual(first_time, second_time)
