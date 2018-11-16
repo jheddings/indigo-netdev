@@ -32,6 +32,44 @@ class ArpCacheTestBase(unittest.TestCase):
         return cache
 
 ################################################################################
+class ArpCacheContainerTest(unittest.TestCase):
+
+    #---------------------------------------------------------------------------
+    def test_GetNone(self):
+        cache = arp.ArpCache()
+        self.assertIsNone(cache['key'])
+
+    #---------------------------------------------------------------------------
+    def test_SetGetNone(self):
+        cache = arp.ArpCache()
+        cache['none'] = None
+        self.assertIsNone(cache['none'])
+
+    #---------------------------------------------------------------------------
+    def test_BasicSetGetString(self):
+        cache = arp.ArpCache()
+
+        cache['key'] = 'value'
+        self.assertEqual(cache['key'], 'value')
+
+    #---------------------------------------------------------------------------
+    def test_BasicSetGetInt(self):
+        cache = arp.ArpCache()
+
+        cache[1] = 42
+        self.assertEqual(cache[1], 42)
+
+    #---------------------------------------------------------------------------
+    def test_BasicSetGetMixed(self):
+        cache = arp.ArpCache()
+
+        cache['key'] = 42
+        cache[1] = 'value'
+
+        self.assertEqual(cache['key'], 42)
+        self.assertEqual(cache[1], 'value')
+
+################################################################################
 class BasicArpCommandUnitTest(ArpCacheTestBase):
 
     #---------------------------------------------------------------------------
@@ -130,13 +168,49 @@ class ArpTablePurgeUnitTest(ArpCacheTestBase):
 
         now = time.time()
 
-        cache.cache['current'] = now
-        cache.cache['expired'] = now - 61
+        cache['current'] = now
+        cache['recent'] = now - 30
+        cache['expired'] = now - 61
 
         cache.purgeExpiredDevices()
 
         self.assertIn('current', cache.cache);
+        self.assertIn('recent', cache.cache);
         self.assertNotIn('expired', cache.cache);
+
+################################################################################
+class ArpTableUpdateTest(ArpCacheTestBase):
+
+    # this test relies on internals of the ArpCache, such as directly modifying
+    # the contents of the cache and the _update methods
+
+    #---------------------------------------------------------------------------
+    def test_BasicUpdateTest(self):
+        cache = arp.ArpCache(timeout=1, arp=None)
+
+        cache_line = 'localhost (127.0.0.1) at 01:23:45:67:89:ab on en0 ifscope [ethernet]'
+
+        cache._updateCacheLine(cache_line)
+
+        self.assertTrue(cache.isActive('01:23:45:67:89:ab'));
+        self.assertFalse(cache.isActive('01:23:45:67:89:cd'));
+
+    #---------------------------------------------------------------------------
+    def test_UpdateCacheLine(self):
+        cache = arp.ArpCache(timeout=1, arp=None)
+
+        cache_line = 'localhost (127.0.0.1) at 01:23:45:67:89:ab on en0 ifscope [ethernet]'
+
+        cache._updateCacheLine(cache_line)
+        first_time = cache['01:23:45:67:89:ab']
+
+        time.sleep(1)
+
+        cache._updateCacheLine(cache_line)
+        second_time = cache['01:23:45:67:89:ab']
+
+        self.assertNotEqual(first_time, second_time)
+        self.assertGreater(second_time, first_time)
 
 ################################################################################
 class ArpTableActiveExpiredUnitTest(ArpCacheTestBase):
@@ -163,8 +237,8 @@ class ArpTableActiveExpiredUnitTest(ArpCacheTestBase):
 
         now = time.time()
 
-        cache.cache['current'] = now
-        cache.cache['recent'] = now - 30
+        cache['current'] = now
+        cache['recent'] = now - 30
 
         self.assertTrue(cache.isActive('current'))
         self.assertTrue(cache.isActive('recent'))
@@ -176,9 +250,9 @@ class ArpTableActiveExpiredUnitTest(ArpCacheTestBase):
         now = time.time()
 
         # since we created the table with a 1-minute timeout...
-        cache.cache['expired'] = now - 60
-        cache.cache['inactive'] = now - 61
-        cache.cache['ancient'] = now - 300
+        cache['expired'] = now - 60
+        cache['inactive'] = now - 61
+        cache['ancient'] = now - 300
 
         self.assertFalse(cache.isActive('expired'))
         self.assertFalse(cache.isActive('inactive'))

@@ -31,6 +31,10 @@ class ArpCache():
         self.logger.debug('using command: %s', self.arp)
 
     #---------------------------------------------------------------------------
+    def __getitem__(self, key): return self.cache.get(key)
+    def __setitem__(self, key, value): self.cache[key] = value
+
+    #---------------------------------------------------------------------------
     def _normalizeAddress(self, address):
         addr = address.lower()
 
@@ -81,8 +85,6 @@ class ArpCache():
     def _updateCacheLine(self, line):
         self.cacheLock.acquire()
 
-        tstamp = time.time()
-
         parts = line.split()
         if len(parts) < 4: return
 
@@ -90,9 +92,11 @@ class ArpCache():
         addr = self._normalizeAddress(parts[3])
         if addr is None: return
 
+        tstamp = time.time()
+
         # update time for found devices
         self.cache[addr] = tstamp
-        self.logger.debug('device found: %s @ %d', addr, tstamp)
+        self.logger.debug('device found: %s @ %s', addr, tstamp)
 
         self.cacheLock.release()
 
@@ -144,6 +148,8 @@ class ArpCache():
     def isActive(self, address):
         addr = self._normalizeAddress(address)
         tstamp = self.cache.get(addr)
+
+        self.logger.debug('device %s expires @ %s', addr, tstamp)
 
         expired = self._isExpired(tstamp)
         if expired is None: return False
