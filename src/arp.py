@@ -36,7 +36,7 @@ class ArpCache():
 
     #---------------------------------------------------------------------------
     def _normalizeAddress(self, address):
-        addr = address.lower()
+        addr = address.lower().strip()
 
         # TODO return None for invalid address
 
