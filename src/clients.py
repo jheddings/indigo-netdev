@@ -34,7 +34,7 @@ class ClientBase():
         return (retval == 0)
 
     #---------------------------------------------------------------------------
-    def isAvailable(self): raise NotImplementedError('')
+    def isAvailable(self): raise NotImplementedError()
 
 ################################################################################
 class NullClient(ClientBase):
