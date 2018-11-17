@@ -89,7 +89,7 @@ class Plugin(iplug.ThreadedPlugin):
         # setup the arp cache with configured timeout
         arpTimeout = self.getPrefAsInt(prefs, 'arpCacheTimeout', 5)
         arpCommand = self.getPref(prefs, 'arpCacheCommand', '/usr/sbin/arp -a')
-        self.arp_cache = arp.ArpCache(timeout=arpTimeout, arp=arpCommand)
+        self.arp_cache = arp.ArpCache(timeout=arpTimeout, cmd=arpCommand)
 
     #---------------------------------------------------------------------------
     def refreshAllDevices(self):

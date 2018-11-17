@@ -15,10 +15,10 @@ class ArpCache():
 
     cache = None
     timeout = 0
-    arp = None
+    arp_cmd = None
 
     #---------------------------------------------------------------------------
-    def __init__(self, timeout=5, arp='/usr/sbin/arp -a'):
+    def __init__(self, timeout=5, cmd='/usr/sbin/arp -a'):
         self.logger = logging.getLogger('Plugin.arp.ArpCache')
         self.timeout = timeout
 
@@ -27,8 +27,8 @@ class ArpCache():
 
         self.cache = dict()
 
-        self.arp = arp
-        self.logger.debug('using command: %s', self.arp)
+        self.arp_cmd = cmd
+        self.logger.debug('using command: %s', self.arp_cmd)
 
     #---------------------------------------------------------------------------
     def __getitem__(self, key): return self.cache.get(key)
@@ -47,7 +47,7 @@ class ArpCache():
 
     #---------------------------------------------------------------------------
     def _getRawArpOutput(self):
-        if self.arp is None: return None
+        if self.arp_cmd is None: return None
 
         # the command takes some time to run so we will bail if
         # another thread is already executing the arp command
@@ -55,7 +55,7 @@ class ArpCache():
             self.logger.warn('arp: already in use')
             return None
 
-        cmd = shlex.split(self.arp)
+        cmd = shlex.split(self.arp_cmd)
         self.logger.debug('exec: %s', cmd)
 
         try:
@@ -182,8 +182,8 @@ def main():
 
     # TODO if there is a command line param, use that to build the arp table
 
-    arp = ArpCache(arp=None)
-    arp._updateCacheData(table)
+    cache = ArpCache(cmd=None)
+    cache._updateCacheData(table)
 
 #-------------------------------------------------------------------------------
 if (__name__== "__main__"):

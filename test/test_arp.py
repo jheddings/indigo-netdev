@@ -21,13 +21,13 @@ class ArpCacheTestBase(unittest.TestCase):
 
     #---------------------------------------------------------------------------
     def _buildTableFromCommand(self, cmd):
-        cache = arp.ArpCache(arp=cmd)
+        cache = arp.ArpCache(cmd=cmd)
         cache.rebuildArpCache()
         return cache
 
     #---------------------------------------------------------------------------
     def _buildTableFromLines(self, lines):
-        cache = arp.ArpCache(arp=None)
+        cache = arp.ArpCache(cmd=None)
         cache._updateCacheLines(lines)
         return cache
 
@@ -164,7 +164,7 @@ class ArpTablePurgeUnitTest(ArpCacheTestBase):
 
     #---------------------------------------------------------------------------
     def test_ConfirmPurgedItem(self):
-        cache = arp.ArpCache(timeout=1, arp=None)
+        cache = arp.ArpCache(timeout=1, cmd=None)
 
         now = time.time()
 
@@ -192,7 +192,7 @@ class ArpTableUpdateTest(ArpCacheTestBase):
 
     #---------------------------------------------------------------------------
     def test_BasicUpdateTest(self):
-        cache = arp.ArpCache(timeout=1, arp=None)
+        cache = arp.ArpCache(timeout=1, cmd=None)
 
         cache._updateCacheLines(self.arp_data)
 
@@ -202,7 +202,7 @@ class ArpTableUpdateTest(ArpCacheTestBase):
 
     #---------------------------------------------------------------------------
     def test_BasicLineUpdateTest(self):
-        cache = arp.ArpCache(timeout=1, arp=None)
+        cache = arp.ArpCache(timeout=1, cmd=None)
 
         cache._updateCacheLine(self.arp_data[0])
 
@@ -212,7 +212,7 @@ class ArpTableUpdateTest(ArpCacheTestBase):
 
     #---------------------------------------------------------------------------
     def test_LineUpdateTimeShift(self):
-        cache = arp.ArpCache(timeout=1, arp=None)
+        cache = arp.ArpCache(timeout=1, cmd=None)
 
         cache._updateCacheLine(self.arp_data[0])
         first_time = cache['01:23:45:67:89:ab']
@@ -232,7 +232,7 @@ class ArpTableActiveExpiredUnitTest(ArpCacheTestBase):
 
     #---------------------------------------------------------------------------
     def test_BasicExpirationTests(self):
-        cache = arp.ArpCache(timeout=1, arp=None)
+        cache = arp.ArpCache(timeout=1, cmd=None)
 
         now = time.time()
 
@@ -245,7 +245,7 @@ class ArpTableActiveExpiredUnitTest(ArpCacheTestBase):
 
     #---------------------------------------------------------------------------
     def test_SimpleCurrentItemCheck(self):
-        cache = arp.ArpCache(timeout=1, arp=None)
+        cache = arp.ArpCache(timeout=1, cmd=None)
 
         now = time.time()
 
@@ -257,7 +257,7 @@ class ArpTableActiveExpiredUnitTest(ArpCacheTestBase):
 
     #---------------------------------------------------------------------------
     def test_SimpleExpiredItemCheck(self):
-        cache = arp.ArpCache(timeout=1, arp=None)
+        cache = arp.ArpCache(timeout=1, cmd=None)
 
         now = time.time()
 
