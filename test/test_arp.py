@@ -26,6 +26,12 @@ class ArpCacheTestBase(unittest.TestCase):
         return cache
 
     #---------------------------------------------------------------------------
+    def _buildTableFromLine(self, line):
+        cache = arp.ArpCache(cmd=None)
+        cache._updateCacheLine(line)
+        return cache
+
+    #---------------------------------------------------------------------------
     def _buildTableFromLines(self, lines):
         cache = arp.ArpCache(cmd=None)
         cache._updateCacheLines(lines)
@@ -104,9 +110,9 @@ class ArpTableParsingUnitTest(ArpCacheTestBase):
     def test_SimpleArpTableLowerCase(self):
         mac = '20:c4:df:a0:54:28'
 
-        cache = self._buildTableFromLines([
+        cache = self._buildTableFromLine(
             'localhost (127.0.0.1) at %s on en0 ifscope [ethernet]' % mac
-        ])
+        )
 
         self.assertTrue(cache.isActive(mac))
         self.assertTrue(cache.isActive(mac.upper()))
@@ -115,9 +121,9 @@ class ArpTableParsingUnitTest(ArpCacheTestBase):
     def test_SimpleArpTableUpperCase(self):
         mac = '20:C4:D7:A0:54:28'
 
-        cache = self._buildTableFromLines([
+        cache = self._buildTableFromLine(
             'localhost (127.0.0.1) at %s on en0 ifscope [ethernet]' % mac
-        ])
+        )
 
         self.assertTrue(cache.isActive(mac))
         self.assertTrue(cache.isActive(mac.lower()))
@@ -192,9 +198,7 @@ class ArpTableUpdateTest(ArpCacheTestBase):
 
     #---------------------------------------------------------------------------
     def test_BasicUpdateTest(self):
-        cache = arp.ArpCache(timeout=1, cmd=None)
-
-        cache._updateCacheLines(self.arp_data)
+        cache = self._buildTableFromLines(self.arp_data)
 
         self.assertTrue(cache.isActive('01:23:45:67:89:ab'));
         self.assertTrue(cache.isActive('ef:cd:ab:12:34:56'));
