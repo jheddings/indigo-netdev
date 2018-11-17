@@ -31,8 +31,10 @@ class ArpCache():
         self.logger.debug('using command: %s', self.arp_cmd)
 
     #---------------------------------------------------------------------------
+    def __len__(self): return len(self.cache)
     def __getitem__(self, key): return self.cache.get(key)
     def __setitem__(self, key, value): self.cache[key] = value
+    def __delitem__(self, key): self.cache.pop(key, None)
 
     #---------------------------------------------------------------------------
     def _normalizeAddress(self, address):
