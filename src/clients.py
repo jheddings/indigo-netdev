@@ -21,8 +21,6 @@ class ClientBase():
         self.execLock.acquire()
         self.logger.debug(u'=> exec%s', cmd)
 
-        retval = -1
-
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         pout, perr = proc.communicate()
 
@@ -34,6 +32,9 @@ class ClientBase():
 
         self.execLock.release()
         return (retval == 0)
+
+    #---------------------------------------------------------------------------
+    def isAvailable(self): raise NotImplementedError('')
 
 ################################################################################
 class NullClient(ClientBase):
