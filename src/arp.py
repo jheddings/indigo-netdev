@@ -20,15 +20,11 @@ class ArpCache():
     #---------------------------------------------------------------------------
     def __init__(self, timeout=5, cmd='/usr/sbin/arp -a'):
         self.logger = logging.getLogger('Plugin.arp.ArpCache')
-        self.timeout = timeout
-
         self.cmdLock = threading.Lock()
         self.cacheLock = threading.RLock()
-
         self.cache = dict()
 
-        self.arp_cmd = cmd
-        self.logger.debug('using command: %s', self.arp_cmd)
+        self.updateProps(timeout=timeout, cmd=cmd)
 
     #---------------------------------------------------------------------------
     def __len__(self): return len(self.cache)
@@ -118,16 +114,37 @@ class ArpCache():
         return (diff >= self.timeout)
 
     #---------------------------------------------------------------------------
-    def rebuildArpCache(self):
+    def updateProps(self, timeout=None, cmd=None):
+        if (timeout is not None):
+            self.timeout = timeout
+
+        if (cmd is not None):
+            self.arp_cmd = cmd
+
+    #---------------------------------------------------------------------------
+    def refreshArpCache(self):
         self.cacheLock.acquire()
 
-        self.updateCurrentDevices()
+        self.logger.debug('updating ARP table')
+        self.loadCurrentDevices()
         self.purgeExpiredDevices()
 
         self.cacheLock.release()
 
     #---------------------------------------------------------------------------
-    def updateCurrentDevices(self):
+    def rebuildArpCache(self):
+        self.cacheLock.acquire()
+
+        self.logger.debug('rebuilding ARP table')
+        self.cache.clear()
+        self.loadCurrentDevices()
+
+        self.cacheLock.release()
+
+    #---------------------------------------------------------------------------
+    def loadCurrentDevices(self):
+        self.logger.debug('loading current devices table')
+
         rawOutput = self._getRawArpOutput()
         if rawOutput is None: return
 
@@ -135,28 +152,31 @@ class ArpCache():
 
     #---------------------------------------------------------------------------
     def purgeExpiredDevices(self):
-        # track the items that have expired...  we can't modify
-        # the cache while we are iterating over its contents
-        expiredDevices = list()
-
         self.cacheLock.acquire()
+        self.logger.debug('purging expired items in table')
 
-        # first, find all the expired keys
-        for addr, tstamp in self.cache.items():
-            if self._isExpired(tstamp):
-                self.logger.debug('device expired: %s; marked for removal', addr)
-                expiredDevices.append(addr)
+        # find all the addresses for expired timestamps
+        expiredDevices = [ addr for addr, tstamp in self.cache.items() if self._isExpired(tstamp) ]
 
         # now, delete the expired addresses
-        for addr in expiredDevices: del self.cache[addr]
+        for addr in expiredDevices:
+            self.cache.pop(addr)
+            self.logger.debug('device expired: %s', addr)
 
         self.cacheLock.release()
 
     #---------------------------------------------------------------------------
     def isActive(self, address):
+        self.logger.debug('looking for %s in table', address)
+
+        # this lock may be overkill, but we want to ensure soemthing doesn't go
+        # sideways if the cache is being modified by another method
+        self.cacheLock.acquire()
+
         addr = self._normalizeAddress(address)
         tstamp = self.cache.get(addr)
 
+        self.cacheLock.release()
         self.logger.debug('device %s expires @ %s', addr, tstamp)
 
         expired = self._isExpired(tstamp)

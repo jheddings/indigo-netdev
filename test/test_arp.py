@@ -169,7 +169,7 @@ class ArpTableParsingUnitTest(ArpCacheTestBase):
 class ArpTablePurgeUnitTest(ArpCacheTestBase):
 
     #---------------------------------------------------------------------------
-    def test_ConfirmPurgedItem(self):
+    def test_BasicPurgeTest(self):
         cache = arp.ArpCache(timeout=1, cmd=None)
 
         now = time.time()
@@ -183,6 +183,20 @@ class ArpTablePurgeUnitTest(ArpCacheTestBase):
         self.assertIn('current', cache.cache);
         self.assertIn('recent', cache.cache);
         self.assertNotIn('expired', cache.cache);
+
+    #---------------------------------------------------------------------------
+    def test_KeepFutureItems(self):
+        cache = arp.ArpCache(timeout=1, cmd=None)
+
+        now = time.time()
+
+        cache['soon'] = now + 10
+        cache['future'] = now + 300
+
+        cache.purgeExpiredDevices()
+
+        self.assertIn('soon', cache.cache);
+        self.assertIn('future', cache.cache);
 
 ################################################################################
 class ArpTableUpdateTest(ArpCacheTestBase):

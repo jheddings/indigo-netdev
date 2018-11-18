@@ -12,7 +12,7 @@ import clients
 class Plugin(iplug.ThreadedPlugin):
 
     wrappers = dict()
-    arp_cache = None
+    arp_cache = arp.ArpCache()
 
     #---------------------------------------------------------------------------
     def validatePrefsConfigUi(self, values):
@@ -89,7 +89,8 @@ class Plugin(iplug.ThreadedPlugin):
         # setup the arp cache with configured timeout
         arpTimeout = self.getPrefAsInt(prefs, 'arpCacheTimeout', 5)
         arpCommand = self.getPref(prefs, 'arpCacheCommand', '/usr/sbin/arp -a')
-        self.arp_cache = arp.ArpCache(timeout=arpTimeout, cmd=arpCommand)
+
+        self.arp_cache.updateProps(timeout=arpTimeout, cmd=arpCommand)
 
     #---------------------------------------------------------------------------
     def refreshAllDevices(self):
@@ -104,7 +105,7 @@ class Plugin(iplug.ThreadedPlugin):
 
     #---------------------------------------------------------------------------
     def runLoopStep(self):
-        self.rebuildArpCache()
+        self.arp_cache.refreshArpCache()
         self.refreshAllDevices()
 
     #---------------------------------------------------------------------------
