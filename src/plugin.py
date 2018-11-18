@@ -90,6 +90,9 @@ class Plugin(iplug.ThreadedPlugin):
         arpTimeout = self.getPrefAsInt(prefs, 'arpCacheTimeout', 5)
         arpCommand = self.getPref(prefs, 'arpCacheCommand', '/usr/sbin/arp -a')
 
+        # we cannot simply create a new ArpCache here since the instance is
+        # passed to device wrappers during plugin initialization, so we just
+        # update the properties of the table instead...
         self.arp_cache.updateProps(timeout=arpTimeout, cmd=arpCommand)
 
     #---------------------------------------------------------------------------
