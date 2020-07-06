@@ -81,10 +81,7 @@
         <Label>URL</Label>
       </Field>
 
-      <!-- for display purposes -->
-      <Field id="address" type="textfield" hidden="yes">
-        <Label>Address</Label>
-      </Field>
+      <Field id="address" type="textfield" hidden="yes" />
     </ConfigUI>
 
     <States>
