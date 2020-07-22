@@ -3,6 +3,53 @@
 <Devices>
 
   <!-- ======================================================== -->
+  <Device type="custom" id="external_ip">
+    <Name>External IP</Name>
+
+    <ConfigUI>
+      <Field id="addressType" type="menu" defaultValue="ipv4">
+        <Label>Address Type</Label>
+        <List>
+          <Option value="ipv4">IPv4</Option>
+          <Option value="ipv6">IPv6</Option>
+        </List>
+      </Field>
+
+      <Field id="address" type="textfield" hidden="yes">
+        <Label>Current Address</Label>
+      </Field>
+    </ConfigUI>
+
+    <States>
+      <State id="lastKnownAddress">
+        <ValueType>String</ValueType>
+        <TriggerLabel>Last Known Address</TriggerLabel>
+        <ControlPageLabel>Last Known Address</ControlPageLabel>
+      </State>
+
+      <State id="active">
+        <ValueType>Boolean</ValueType>
+        <TriggerLabel>Device is Active</TriggerLabel>
+        <ControlPageLabel>Device is Active</ControlPageLabel>
+      </State>
+
+      <State id="status">
+        <ValueType>String</ValueType>
+        <TriggerLabel>Device Status Changes</TriggerLabel>
+        <ControlPageLabel>Device Status</ControlPageLabel>
+      </State>
+
+      <State id="lastActiveAt">
+        <ValueType>String</ValueType>
+        <TriggerLabel>Last Active Time Changes</TriggerLabel>
+        <ControlPageLabel>Last Active Time</ControlPageLabel>
+      </State>
+    </States>
+
+    <UiDisplayStateId>status</UiDisplayStateId>
+  </Device>
+
+  <!-- ======================================================== -->
   <Device type="custom" id="service">
     <Name>Network Service</Name>
 

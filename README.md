@@ -51,6 +51,10 @@ Pings an address and reports 'Active' if it responds succesfully.
 
 Examine the HTTP status of a path and set device as OK or ERROR.
 
+### External IP
+
+Querries [ipify](https://www.ipify.org) for the current external IP (either IPv4 or IPv6).
+
 ### Local Devices
 
 Uses the local ARP table to find devices on the network by their hardware or MAC address.

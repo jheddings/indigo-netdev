@@ -40,6 +40,8 @@ class Plugin(iplug.ThreadedPlugin):
             wrapper.SSH.validateConfig(values, errors)
         elif typeId == 'macos':
             wrapper.macOS.validateConfig(values, errors)
+        elif typeId == 'external_ip':
+            wrapper.ExternalIP.validateConfig(values, errors)
 
         return ((len(errors) == 0), values, errors)
 
@@ -62,6 +64,8 @@ class Plugin(iplug.ThreadedPlugin):
             wrap = wrapper.SSH(device)
         elif typeId == 'macos':
             wrap = wrapper.macOS(device)
+        elif typeId == 'external_ip':
+            wrap = wrapper.ExternalIP(device)
         else:
             self.logger.error(u'unknown device type: %s', typeId)
 

@@ -40,6 +40,11 @@ class DeviceWrapper():
     # sub-classes should overide this for their custom states
     def updateDeviceInfo(self): pass
 
+    #---------------------------------------------------------------------------
+    @staticmethod
+    def validateConfig(values, errors):
+        pass
+
 ################################################################################
 # base wrapper class for relay-type devices
 class RelayDeviceWrapper(DeviceWrapper):
@@ -110,6 +115,37 @@ class Ping(DeviceWrapper):
     @staticmethod
     def validateConfig(values, errors):
         iplug.validateConfig_Hostname('address', values, errors, emptyOk=False)
+
+################################################################################
+# plugin device wrapper for External IP devices
+class ExternalIP(DeviceWrapper):
+
+    #---------------------------------------------------------------------------
+    def __init__(self, device):
+        self.logger = logging.getLogger('Plugin.wrapper.ExternalIP')
+
+        addressType = device.pluginProps['addressType']
+
+        self.device = device
+
+        if addressType == 'ipv4':
+            self.client = clients.IPv4AddressClient()
+        elif addressType == 'ipv6':
+            self.client = clients.IPv6AddressClient()
+
+    #---------------------------------------------------------------------------
+    def updateDeviceInfo(self):
+        # the worker (client) keeps a record of the current address...
+        addr = self.client.current_address
+
+        device = self.device
+
+        props = device.pluginProps
+        props['address'] = addr
+        device.replacePluginPropsOnServer(props)
+
+        if addr is not None:
+            device.updateStateOnServer('lastKnownAddress', addr)
 
 ################################################################################
 # plugin device wrapper for HTTP Status devices

@@ -2,6 +2,7 @@
 
 import logging
 import shlex
+import json
 import socket
 import urllib2
 import threading
@@ -164,6 +165,69 @@ class ArpClient(ClientBase):
     def isAvailable(self):
         self.logger.debug('checking ARP table for device - %s', self.address)
         return self.arpTable.isActive(self.address)
+
+################################################################################
+class ExternalAddressClient(ClientBase):
+
+    # helper class for parsing API results...
+    # based on API at https://www.ipify.org/
+
+    #---------------------------------------------------------------------------
+    def __init__(self):
+        ClientBase.__init__(self)
+        self.logger = logging.getLogger('Plugin.client.ExternalAddressClient')
+
+        current_address = None
+
+    #---------------------------------------------------------------------------
+    def parseAddress(self, url):
+        self.logger.debug('getting address from API - %s', url)
+
+        # TODO confirm error handling
+
+        try:
+            resp = urllib2.urlopen(url)
+            raw = resp.read()
+            self.logger.debug('read %d bytes from API', len(raw))
+
+            data = json.loads(raw)
+            addr = data['ip']
+
+        except urllib2.URLError as e:
+            self.logger.error('ERROR loading API - %s', e.reason)
+            addr = None
+
+        self.current_address = addr
+
+        return addr
+
+################################################################################
+class IPv4AddressClient(ExternalAddressClient):
+
+    #---------------------------------------------------------------------------
+    def __init__(self):
+        ExternalAddressClient.__init__(self)
+        self.logger = logging.getLogger('Plugin.client.IPv4AddressClient')
+
+    #---------------------------------------------------------------------------
+    def isAvailable(self):
+        addr = self.parseAddress('https://api.ipify.org/?format=json')
+        self.logger.debug('found external address - %s', addr)
+        return addr is not None
+
+################################################################################
+class IPv6AddressClient(ExternalAddressClient):
+
+    #---------------------------------------------------------------------------
+    def __init__(self):
+        ExternalAddressClient.__init__(self)
+        self.logger = logging.getLogger('Plugin.client.IPv6AddressClient')
+
+    #---------------------------------------------------------------------------
+    def isAvailable(self):
+        addr = self.parseAddress('https://api6.ipify.org/?format=json')
+        self.logger.debug('found external address - %s', addr)
+        return addr is not None
 
 ################################################################################
 class SSHClient(ServiceClient):
