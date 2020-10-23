@@ -8,6 +8,9 @@ import urllib2
 import threading
 import subprocess
 
+from ssl import SSLError
+from urllib2 import URLError
+
 ################################################################################
 class ClientBase():
 
@@ -183,8 +186,6 @@ class ExternalAddressClient(ClientBase):
     def parseAddress(self, url):
         self.logger.debug('getting address from API - %s', url)
 
-        # TODO confirm error handling
-
         try:
             resp = urllib2.urlopen(url)
             raw = resp.read()
@@ -193,8 +194,12 @@ class ExternalAddressClient(ClientBase):
             data = json.loads(raw)
             addr = data['ip']
 
-        except urllib2.URLError as e:
-            self.logger.error('ERROR loading API - %s', e.reason)
+        except SSLError as e:
+            self.logger.error('SSLError - %s', e.reason)
+            addr = None
+
+        except URLError as e:
+            self.logger.error('URLError - %s', e.reason)
             addr = None
 
         self.current_address = addr
