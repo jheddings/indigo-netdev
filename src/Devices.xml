@@ -7,12 +7,16 @@
     <Name>External IP</Name>
 
     <ConfigUI>
-      <Field id="addressType" type="menu" defaultValue="ipv4">
+      <Field id="addressType" type="menu" defaultValue="ipv4" hidden="yes">
         <Label>Address Type</Label>
         <List>
           <Option value="ipv4">IPv4</Option>
           <Option value="ipv6">IPv6</Option>
         </List>
+      </Field>
+
+      <Field id="passwordHelp" type="label">
+        <Label>At this time, only IPv4 addresses are detected.</Label>
       </Field>
 
       <Field id="address" type="textfield" hidden="yes">
