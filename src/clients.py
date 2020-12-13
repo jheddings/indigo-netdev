@@ -8,9 +8,6 @@ import urllib2
 import threading
 import subprocess
 
-from ssl import SSLError
-from urllib2 import URLError
-
 ################################################################################
 class ClientBase():
 
@@ -194,12 +191,8 @@ class ExternalAddressClient(ClientBase):
             data = json.loads(raw)
             addr = data['ip']
 
-        except SSLError as e:
-            self.logger.error('SSLError - %s', e.reason)
-            addr = None
-
-        except URLError as e:
-            self.logger.error('URLError - %s', e.reason)
+        except Exception as e:
+            self.logger.error(str(e))
             addr = None
 
         self.current_address = addr
